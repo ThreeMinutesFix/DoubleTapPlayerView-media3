@@ -1,47 +1,40 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'maven-publish'
+}
 
 apply from: '../dependencies.gradle'
 
 android {
     compileSdkVersion build.compileSdk
-    buildToolsVersion build.buildTools
+
+    namespace 'com.github.vkay94.dtpv'
     defaultConfig {
-        applicationId "com.github.vkay94.doubletapplayerviewexample"
         minSdkVersion build.minSdk
         targetSdkVersion build.targetSdk
-        versionCode build.libMajor + (build.libMinor * 100) + (build.libPatch * 10000)
-        versionName "$build.libMajor.$build.libMinor.$build.libPatch"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        multiDexEnabled true
-    }
-    signingConfigs {
-        release {
-            def keystorePropertiesFile = rootProject.file("keystore.properties")
 
-            if (keystorePropertiesFile.exists()) {
-                def keystoreProperties = new Properties()
-                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+        vectorDrawables.useSupportLibrary = true
 
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-            }
-        }
+        consumerProguardFiles 'consumer-rules.pro'
     }
+
     buildTypes {
         release {
             minifyEnabled false
-            // shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // signingConfig signingConfigs.release
         }
     }
 
-    buildFeatures {
-        viewBinding true
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
 }
 
 dependencies {
@@ -49,16 +42,25 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
     implementation "androidx.appcompat:appcompat:$versions.appcompat"
     implementation "androidx.core:core-ktx:$versions.core_ktx"
+    implementation 'androidx.media3:media3-exoplayer:1.5.0'
+    implementation 'androidx.media3:media3-ui:1.5.0'
     implementation "androidx.constraintlayout:constraintlayout:$versions.constraintlayout"
+}
 
-    // ExoPlayer2
-    implementation "com.google.android.exoplayer:exoplayer-core:$versions.exoplayer"
-    implementation "com.google.android.exoplayer:exoplayer-ui:$versions.exoplayer"
+// https://ayoubbenkhemis.medium.com/publish-android-library-with-jitpack-be00a29a8174
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
 
-    implementation "com.github.StephenVinouze:MaterialNumberPicker:1.1.0"
-    implementation project(path: ':doubletapplayerview')
-
-    implementation "com.google.android.material:material:$versions.material"
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.multidex:multidex:2.0.1'
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.vkay94.dtpv'
+                artifactId = 'doubletapplayerview'
+                version = build.libMajor + (build.libMinor * 100) + (build.libPatch * 10000)
+            }
+        }
+    }
 }
